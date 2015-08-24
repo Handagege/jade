@@ -86,7 +86,7 @@ def test2():
         jade(interestDic)
 
 def test3():
-        interestDic = getFollowDicByFile('../input/whiteUid_10w.data')
+        interestDic = getFollowDicByFile('../input/coworkerFellowRel.data')
         jade(interestDic)
 
 def jade(interestDic):
@@ -105,32 +105,38 @@ def jade(interestDic):
         #**************
 
 	#发现极大团-利用枢纽点减少回溯次数的bk算法
-        limitNodeInSeedNum = 3
+        limitNodeInSeedNum = 24
 	bronkerboschSimplePivot(p,r,x,duplexConnectDic,limitNodeInSeedNum,maximalCliqueList)
 	print "maximal clique number : ",len(maximalCliqueList)
         end = time.time()
         print "maximal clique detect cost time : %0.2f"%(end-beg1)
-        calCliqueOverlap(maximalCliqueList) 
+        maxOverlapList,minOverlapList = getOverlapMeasures(maximalCliqueList) 
         #**************
 
         #团拓展
-	#ce = cliqueExpander(interestDic,fanDic,maximalCliqueList)
+	ce = cliqueExpander(interestDic,fanDic,maximalCliqueList)
 	#newCliqueList = ce.expand()
         #end = time.time()
         #print "total cost time : %0.2f"%(end-beg)
         #**************
 
         #结果数据处理
-        fout = open('../result/result_2_10w','w')
-        for c in maximalCliqueList:
-                fout.write(str(len(c)))
-                cs = map(str,c)
-                fout.write('    '+','.join(cs))
-                fout.write('\n')
-	#for clique in cliqueList:
-	#	modularityOfOneClique = getMvalue(clique,m,interestNumDic,fanNumDic,interestDic)
-	#	print(clique,' : %0.5f'%(modularityOfOneClique))
-        
+        f = open('../result/coworker_result_24_1w','w')
+        for index, value in enumerate(maximalCliqueList):
+                cl = map(str,value)
+                f.write(str(index)+'    '+','.join(cl)+'\n')
+        f.close()
+
+        f = open('../result/coworker_measure_24_1w','w')
+        for index, value in enumerate(maximalCliqueList):
+		modularityOfOneClique = getMvalue(value,ce.m,ce.interestNumDic,ce.fanNumDic,interestDic)
+                sIndex = str(index)+'--'
+                sM = ' Mvalue : %.3f '%(modularityOfOneClique)
+                sMaxOverlap = ' maxOverlap : %.3f '%(maxOverlapList[index])
+                sMinOverlap = ' minOverlap : %.3f '%(minOverlapList[index])
+                sLen = 'length : %d'%(len(value))
+                f.write(sIndex+sM+sMaxOverlap+sMinOverlap+'\n')
+        f.close() 
 
 if __name__ == "__main__":
 	test3()

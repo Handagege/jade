@@ -60,21 +60,39 @@ def getMvalue(clique,m,interestNumDic,fanNumDic,interestDic):
 	modularityOfOneClique = calModularityOfOneClique(float(m),lc,dc)
 	return modularityOfOneClique
 
-def calCliqueOverlap(cliqueList):
+
+def calCliqueOverlap(cliqueA,cliqueB):
+        a = len(cliqueA)
+        b = len(cliqueB)
+        min = (a if a < b else b)
+        tempOverlap = float(len(cliqueA & cliqueB))/float(min)
+        return tempOverlap
+
+
+def getOverlapMeasures(cliqueList):
+        overlapMeasureList = []
         count = 0
         l = len(cliqueList)
         overlap = 0.0
         total = 0
-        for i in range(0,l):
+        maxOverlapList = []
+        minOverlapList = []
+        for i in range(0,l-1):
+                overlapList = []
                 for j in range(i+1,l):
                         a = len(cliqueList[i])
                         b = len(cliqueList[j])
-                        min = (a if a < b else b)
-                        total += min
+                        minLen = (a if a < b else b)
+                        total += minLen
                         tempOverlap = float(len(cliqueList[i] & cliqueList[j]))
                         overlap += tempOverlap
-                        #print i,"-",j," : ",tempOverlap/float(min)
+                        overlapList.append(tempOverlap/float(minLen))
+                maxOverlapList.append(max(overlapList))
+                minOverlapList.append(min(overlapList))
         overlap = overlap/float(total)
+        maxOverlapList.append(0)
+        minOverlapList.append(0)
         print "overlap weigting average : %f"%(overlap)
+        return maxOverlapList,minOverlapList
 
 ##################################

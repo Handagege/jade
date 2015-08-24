@@ -6,11 +6,22 @@ import json
 
 def getFollowDicByFile(filePath):
         followDic = {}
+        count = 0
         with open(filePath) as f:
                 for line in f:
-                        splitList = line.split('-')
+                        count += 1
+                        splitList = line.split('\t')
                         uidKey = int(splitList[0])
-                        followUids = set(map(int,splitList[1].split(',')))
+                        followUidsStr = splitList[1]
+                        try:
+                                if followUidsStr == '\n':
+                                        followUids = set()
+                                else:
+                                        followUids = set(map(int,followUidsStr.split(',')))
+                        except ValueError:
+                                print followUidsStr.split(',')
+                                print count
+                                exit()
                         followDic[uidKey] = followUids
         uidSet = set(followDic.keys())
         for i in followDic:
@@ -76,12 +87,10 @@ def test1():
                 
 
 def test2():
-        #followDic = getFollowDicByFile('../input/whiteUid_10w.data')
-        followDic = getFollowDicByFile('../input/test.data')
+        followDic = getFollowDicByFile('../input/whiteUid_10w.data')
+        #followDic = getFollowDicByFile('../input/.data')
         fanDic = getFanDicByFollowDic(followDic)
         duplexingDic = getDuplexingDic(followDic,fanDic)
-        myPrint(followDic)
-        myPrint(fanDic)
         myPrint(duplexingDic)
         flag = checkoutIntegrity(followDic)
         print 'data correct : ',flag
