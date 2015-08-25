@@ -56,25 +56,18 @@ def getMvalue(clique,m,interestNumDic,fanNumDic,interestDic):
 	interestNumInCliqueDic = getConnectNumDicJoiningClique(clique,interestDic)
 	lc = calLC(interestNumInCliqueDic)
 	dc = calDC(clique,interestNumDic,fanNumDic,lc)
-#	print(m,lc,dc)
+	#print(m,lc,dc)
 	modularityOfOneClique = calModularityOfOneClique(float(m),lc,dc)
 	return modularityOfOneClique
 
 
-def calCliqueOverlap(cliqueA,cliqueB):
-        a = len(cliqueA)
-        b = len(cliqueB)
-        min = (a if a < b else b)
-        tempOverlap = float(len(cliqueA & cliqueB))/float(min)
+def calCliqueOverlap(cliqueA,cliqueB,minLen):
+        tempOverlap = float(len(cliqueA & cliqueB))/float(minLen)
         return tempOverlap
 
 
 def getOverlapMeasures(cliqueList):
-        overlapMeasureList = []
-        count = 0
         l = len(cliqueList)
-        overlap = 0.0
-        total = 0
         maxOverlapList = []
         minOverlapList = []
         for i in range(0,l-1):
@@ -83,16 +76,68 @@ def getOverlapMeasures(cliqueList):
                         a = len(cliqueList[i])
                         b = len(cliqueList[j])
                         minLen = (a if a < b else b)
-                        total += minLen
                         tempOverlap = float(len(cliqueList[i] & cliqueList[j]))
-                        overlap += tempOverlap
                         overlapList.append(tempOverlap/float(minLen))
                 maxOverlapList.append(max(overlapList))
                 minOverlapList.append(min(overlapList))
-        overlap = overlap/float(total)
         maxOverlapList.append(0)
         minOverlapList.append(0)
-        print "overlap weigting average : %f"%(overlap)
         return maxOverlapList,minOverlapList
 
+
+def getAvgOverlap(cliqueList):
+        l = len(cliqueList)
+        overlap = 0.0
+        total = 0
+        for i in range(0,l-1):
+                for j in range(i+1,l):
+                        a = len(cliqueList[i])
+                        b = len(cliqueList[j])
+                        minLen = (a if a < b else b)
+                        total += minLen
+                        tempOverlap = float(len(cliqueList[i] & cliqueList[j]))
+                        overlap += tempOverlap
+        overlap = overlap/float(total)
+        print "overlap weigting average : %f"%(overlap)
+        return overlap
+
+
+def getMaxMinOverlap(cliqueList):
+        l = len(cliqueList)
+        maxOverlapList = []
+        minOverlapList = []
+        for i in range(0,l):
+                overlapList = []
+                for j in range(0,l):
+                        if i != j:
+                                a = len(cliqueList[i])
+                                b = len(cliqueList[j])
+                                minLen = float(a if a < b else b)
+                                tempOverlap = float(len(cliqueList[i] & cliqueList[j]))
+                                overlapList.append(tempOverlap/minLen)
+                maxOverlapList.append(max(overlapList))
+                minOverlapList.append(min(overlapList))
+        flag = True
+        for i in maxOverlapList:
+                if i == 1.0:
+                        flag = False
+        print flag
+        avgMaxOverlap = avg(maxOverlapList)
+        avgMinOverlap = avg(minOverlapList)
+        return avgMaxOverlap,avgMinOverlap
+        
+
+def avg(list):
+        total = 0.0
+        for i in list:
+                total += i
+        return total/float(len(list))
+
+
 ##################################
+
+if __name__ == '__main__':
+        c = [set([1,2,3]),set([2,4,5,6])]
+        maxo,mino = getMaxMinOverlap(c)
+        print c
+        print maxo,mino

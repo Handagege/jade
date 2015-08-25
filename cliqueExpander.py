@@ -1,7 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+
 import graphTool
 import time
+
 
 class cliqueExpander():
 	def __init__(self,interestDic,fanDic,seedCliqueList):
@@ -15,24 +18,37 @@ class cliqueExpander():
 	
 	def expand(self):
                 beg = time.time()
-		cliqueDic,cliqueMvalueDic = self.getCliqueDic(self.seedCliqueList)
+                print "seedCliqueList length : %d"%(len(self.seedCliqueList))
+		newCliqueList = self.delOverlapClique(self.seedCliqueList,0.8)
+                print "newCliqueList length : %d"%(len(newCliqueList))
+                end = time.time()
+                print "delete overlap cliques cost : %0.2f"%(end-beg)
+                beg = end
+		cliqueDic,cliqueMvalueDic = self.getCliqueDic(newCliqueList)
                 end = time.time()
                 print "calulate M clique's value cost : %0.2f"%(end-beg)
                 beg = end
-		#newCliqueList = self.expandClique(cliqueDic,cliqueMvalueDic)
-                #end = time.time()
-                #print "expand cliques cost : %0.2f"%(end-beg)
-                #beg = end
-		#cliqueDic,cliqueMvalueDic = self.getCliqueDic(newCliqueList)
-		#newCliqueList = self.expandNode(cliqueDic,cliqueMvalueDic)
-                #end = time.time()
-                #print "expand node cost : %0.2f"%(end-beg)
-		#cliqueDic,cliqueMvalueDic = self.getCliqueDic(newCliqueList)
 		newCliqueList = self.expandNode(cliqueDic,cliqueMvalueDic)
                 end = time.time()
                 print "expand node cost : %0.2f"%(end-beg)
 		return newCliqueList
 	
+
+        def delOverlapClique(self,cliqueList,overlapLimitValue = 0.8):
+                removeList = []
+                newCliqueList = []
+                l = len(cliqueList)
+                for index,value in enumerate(cliqueList):
+                        newClique = set()
+                        if index not in removeList:
+                                tempV = value.copy()
+                                for j in range(index+1,l):
+                                        if self.isOverlap(tempV,cliqueList[j],overlapLimitValue):
+                                                tempV |= cliqueList[j]
+                                                removeList.append(j)
+                                newCliqueList.append(tempV)
+                return newCliqueList
+        
 
 	#依据团与团关系拓展
 	def expandClique(self,cliqueDic,cliqueMvalueDic):
@@ -57,7 +73,7 @@ class cliqueExpander():
 		#print(waitedMergeCliqueDic)
 		for ck in cliqueKeyList:
 			expandClique = cliqueDic[ck].copy()
-			expandClique = self.mergeClique(expandClique,waitedMergeCliqueDic.get(ck,set()))
+			self.mergeClique(expandClique,waitedMergeCliqueDic.get(ck,set()))
 			#print(expandClique)
 			newCliqueList.append(expandClique)
                 print ".......expand clique end......"
@@ -106,6 +122,7 @@ class cliqueExpander():
 			cliqueMvalueDic[count] = graphTool.calModularityOfOneClique(self.m,lc,dc)
 			count += 1
 		return cliqueDic,cliqueMvalueDic
+
 		
 	#判断是否合并
 	def isMergeClique(self,cliqueSeedKey,candidateCliqueKey,cliqueDic,cliqueMvalueDic):
@@ -117,6 +134,7 @@ class cliqueExpander():
 		#print(finalMvalue)
 		return finalMvalue > originMvalue1 and finalMvalue > originMvalue2
 
+
 	def isMergeNode(self,key,node,cliqueDic,cliqueMvalueDic):
 		originMvalue = cliqueMvalueDic[key]
 		#finalClique = cliqueDic[cliqueSeedKey].copy()
@@ -125,9 +143,25 @@ class cliqueExpander():
                 finalMvalue = self.getMvalueByAdd(key,cliqueDic,node)
 		return finalMvalue > originMvalue
 
+        def isOverlap(self,cliqueA,cliqueB,threshold):
+                overlapNum = len(cliqueA & cliqueB)
+                al = len(cliqueA)
+                bl = len(cliqueB)
+                minLen = (al if al < bl else bl)
+                if abs(al-bl) >= minLen*2:
+                        return False
+                if minLen - overlapNum == 1:
+                        return True
+                elif float(overlapNum)/float(minLen) > threshold:
+                        return True
+                else:
+                        return False
+                
+
 	#计算模块度M
 	def getMvalue(self,clique):
 		return graphTool.getMvalue(clique,self.m,self.interestNumDic,self.fanNumDic,self.interestDic)
+
 	
         def getMvalueByAdd(self,seedKey,cliqueDic,node):
                 oldLC = self.cliqueLCvalueDic[seedKey]
@@ -144,11 +178,23 @@ class cliqueExpander():
                 temp = []
 		for i in cliqueList:
 			temp.extend(list(i))
-                c = c | set(temp)
-		return c
+                c.update(set(temp))
+
 		
 	#单结点合并
 	def mergeNode(self,c,nodeList):
+                temp = []
 		for i in nodeList:
-			c.add(i)
+			temp.append(i)
+                c.update(set(temp))
 ######################################
+
+
+if __name__ == '__main__':
+        seedCliqueList = []
+        with open('../result/coworker_') as f:
+                for line in f:
+                        seedCliqueList.append(set(line.split(',')))
+        ce = cliqueExpander({},{},seedCliqueList)
+        ce.expand()
+

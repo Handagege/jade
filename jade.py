@@ -1,51 +1,12 @@
 #!/data1/zhanghan/bin/bin
 # -*- coding: utf-8 -*-
 
-import pandas as pd
-import numpy as np
 from cliqueExpander import *
 from bronkerbosch import *
 from transToStdDataframe import *
 from graphTool import *
 import time
 
-
-#根据关注关系列表获得被关注列表
-def getFanNumDic(interestNumDic):
-	pass
-
-#取得单向连接关系
-def getSimplexConnectDic(matrixValues):
-	l = len(matrixValues)
-	vertexList = range(0,l)
-	simplexConnectDic = {}	
-	for vertex_id_i in vertexList:
-		simplexConnectList = []
-		for vertex_id_j in vertexList:
-			if matrixValues[vertex_id_i,vertex_id_j]:
-				simplexConnectList.append(vertex_id_j+1)
-		simplexConnectDic[vertex_id_i+1] = set(simplexConnectList)
-	return simplexConnectDic
-
-#取得双向连接关系
-def getDuplexConnectDic(matrixValues):
-	l = len(matrixValues)
-	vertexList = range(0,l)
-	duplexConnectDic = {}	
-	#print(matrixValues)
-	#print(matrixValues.T)
-	for vertex_id_i in vertexList:
-		duplexingConnectList = []
-		for vertex_id_j in vertexList:
-			if matrixValues[vertex_id_i,vertex_id_j] and matrixValues[vertex_id_j,vertex_id_i]:
-				duplexingConnectList.append(vertex_id_j+1)
-		duplexConnectDic[vertex_id_i+1] = set(duplexingConnectList)
-	return duplexConnectDic
-	
-def readCsvToMatrix(fname='m.csv'):
-	#第一行是列名,如果没有列名header=None	
-	m = pd.read_csv(fname,delimiter=' ',header=None)
-	return m.values
 
 def removeSimpleClique(maximalCliqueList,minLen = 2):
 	#tdata = maximalCliqueList.copy()
@@ -56,89 +17,107 @@ def removeSimpleClique(maximalCliqueList,minLen = 2):
 			removeList.append(c)
 		else:
 			restList.append(c)
-
+        maximalCliqueList = []
 	return restList
 
 
 def test1():
-        #输入数据为矩阵形式
-
-	#获得关注矩阵，转置后成为被关注矩阵
-	mv = readCsvToMatrix()
-	print(mv)
-	#单向，双向关系字典(单向关系删除)
-	interestDic = getSimplexConnectDic(mv)
-	fanDic = getSimplexConnectDic(mv.T)
-	duplexConnectDic = getDuplexConnectDic(mv)
-	
-	p = set(duplexConnectDic.keys())
-	r = set()
-	x = set()
-	maximalCliqueList = []
-	#发现极大团-利用枢纽点减少回溯次数的bk算法
-	bronkerboschSimplePivot(p,r,x,duplexConnectDic,maximalCliqueList)
-	
-
-def test2():
-        f = file('../input/followRel_10w.json')
-        interestDic = json.load(f)
-        interestDic = transKeyTypeToInt(interestDic)
-        jade(interestDic)
-
-def test3():
+        #全量数据集
         interestDic = getFollowDicByFile('../input/coworkerFellowRel.data')
-        jade(interestDic)
-
-def jade(interestDic):
-	#**************
-        beg = time.time()
-        print(len(interestDic))
 	fanDic = getFanDicByFollowDic(interestDic)
 	duplexConnectDic = getDuplexingDic(interestDic,fanDic)
-	p = set(duplexConnectDic.keys())
-	r = set()
-	x = set()
-	maximalCliqueList = []
+        jade(interestDic,fanDic,duplexConnectDic,'../result/coworker_result_4_1w')
+
+
+def test2():
+        #纯双向关系数据
+        interestDic = getFollowDicByFile('../input/coworkerFellowRel.data')
+        fanDic = getFanDicByFollowDic(interestDic)
+        duplexConnectDic = getDuplexingDic(interestDic,fanDic)
+        jade(duplexConnectDic,duplexConnectDic,duplexConnectDic,6,'../result/coworker_total_duplex')
+
+
+def test3():
+        #纯单向关系数据
+        interestDic = getFollowDicByFile('../input/coworkerFellowRel.data')
+        fanDic = getFanDicByFollowDic(interestDic)
+        pureSimplexConnectDic = {}
+        for i in interestDic:
+                pureSimplexConnectDic[i] = interestDic[i] ^ fanDic[i]
+                duplexConnectVertexs = interestDic[i] & fanDic[i]
+                interestDic[i] -= duplexConnectVertexs
+                fanDic[i] -= duplexConnectVertexs
+        jade(interestDic,fanDic,pureSimplexConnectDic,6,'../result/coworker_total_simplex')
+
+
+def test4delOverlapClique():
+        seedCliqueList = []
+        with open('../result/coworker_') as f:
+                for line in f:
+                        line.rstrip('\n')
+                        seedCliqueList.append(set(map(int,line.split(','))))
+        ce = cliqueExpander({},{},seedCliqueList)
+        newCliqueList = ce.expand()
+        beg = time.time()
+        #smax,smin = getMaxMinOverlap(seedCliqueList)
+        #nmax,nmin = getMaxMinOverlap(newCliqueList)
+        #print 'seedCliqueList overlap -- max : %.4f min : %.4f'%(smax,smin)
+        #print 'newCliqueList overlap -- max : %.4f min : %.4f'%(nmax,nmin)
+        getAvgOverlap(seedCliqueList)
+        getAvgOverlap(newCliqueList)
         end = time.time()
-        print "data prepare cost time : %0.2f"%(end-beg)
-        beg1 = end
+        print 'cal overlap cost : %0.4f'%(end-beg)
+
+
+def jade(interestDic,fanDic,duplexConnectDic,limitNodeInSeedNum,outPath):
+	#**************
+        beg = time.time()
+        #print(len(interestDic))
+	#p = set(duplexConnectDic.keys())
+	#r = set()
+	#x = set()
+	#maximalCliqueList = []
         #**************
 
 	#发现极大团-利用枢纽点减少回溯次数的bk算法
-        limitNodeInSeedNum = 24
-	bronkerboschSimplePivot(p,r,x,duplexConnectDic,limitNodeInSeedNum,maximalCliqueList)
-	print "maximal clique number : ",len(maximalCliqueList)
-        end = time.time()
-        print "maximal clique detect cost time : %0.2f"%(end-beg1)
-        maxOverlapList,minOverlapList = getOverlapMeasures(maximalCliqueList) 
+	#bronkerboschSimplePivot(p,r,x,duplexConnectDic,limitNodeInSeedNum,maximalCliqueList)
+	#print "maximal clique number : ",len(maximalCliqueList)
+        #end = time.time()
+        #print "maximal clique detect cost time : %0.2f"%(end-beg)
         #**************
 
+        seedCliqueList = []
+        with open('../result/coworker_total_simplex') as f:
+                for line in f:
+                        line.rstrip('\n')
+                        seedCliqueList.append(set(map(int,line.split(','))))
         #团拓展
-	ce = cliqueExpander(interestDic,fanDic,maximalCliqueList)
-	#newCliqueList = ce.expand()
-        #end = time.time()
-        #print "total cost time : %0.2f"%(end-beg)
+	ce = cliqueExpander(interestDic,fanDic,seedCliqueList)
+	newCliqueList = ce.expand()
+        end = time.time()
+        print "total cost time : %0.2f"%(end-beg)
         #**************
 
         #结果数据处理
-        f = open('../result/coworker_result_24_1w','w')
-        for index, value in enumerate(maximalCliqueList):
-                cl = map(str,value)
-                f.write(str(index)+'    '+','.join(cl)+'\n')
-        f.close()
+        cliqueResult = newCliqueList
+        #f = open(outPath,'w')
+        #for index, value in enumerate(maximalCliqueList):
+        #        cl = map(str,value)
+        #        #f.write(str(index)+'    '+','.join(cl)+'\n')
+        #        f.write(','.join(cl)+'\n')
+        #f.close()
 
-        f = open('../result/coworker_measure_24_1w','w')
-        for index, value in enumerate(maximalCliqueList):
+        f = open('../result/coworker_measure_simplex_1w','w')
+        for index, value in enumerate(cliqueResult):
 		modularityOfOneClique = getMvalue(value,ce.m,ce.interestNumDic,ce.fanNumDic,interestDic)
                 sIndex = str(index)+'--'
-                sM = ' Mvalue : %.3f '%(modularityOfOneClique)
-                sMaxOverlap = ' maxOverlap : %.3f '%(maxOverlapList[index])
-                sMinOverlap = ' minOverlap : %.3f '%(minOverlapList[index])
-                sLen = 'length : %d'%(len(value))
-                f.write(sIndex+sM+sMaxOverlap+sMinOverlap+'\n')
+                sl = ' length : %d '%(len(value))
+                sM = ' Mvalue : %f '%(modularityOfOneClique)
+                f.write(sIndex+sl+sM+'\n')
         f.close() 
 
 if __name__ == "__main__":
+        #test2()
 	test3()
-
+        #test4delOverlapClique()
 
