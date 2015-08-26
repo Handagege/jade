@@ -17,9 +17,11 @@ class cliqueExpander():
 
 	
 	def expand(self):
+                mutiExpandCliqueList = []
                 beg = time.time()
                 print "seedCliqueList length : %d"%(len(self.seedCliqueList))
 		newCliqueList = self.delOverlapClique(self.seedCliqueList,0.8)
+                mutiExpandCliqueList.append(newCliqueList)
                 print "newCliqueList length : %d"%(len(newCliqueList))
                 end = time.time()
                 print "delete overlap cliques cost : %0.2f"%(end-beg)
@@ -29,9 +31,10 @@ class cliqueExpander():
                 print "calulate M clique's value cost : %0.2f"%(end-beg)
                 beg = end
 		newCliqueList = self.expandNode(cliqueDic,cliqueMvalueDic)
+                mutiExpandCliqueList.append(newCliqueList)
                 end = time.time()
                 print "expand node cost : %0.2f"%(end-beg)
-		return newCliqueList
+		return mutiExpandCliqueList
 	
 
         def delOverlapClique(self,cliqueList,overlapLimitValue = 0.8):
@@ -53,7 +56,6 @@ class cliqueExpander():
 	#依据团与团关系拓展
 	def expandClique(self,cliqueDic,cliqueMvalueDic):
 		cliqueKeyList = list(cliqueDic.keys())
-		#print(type(cliqueKeyList))
 		l = len(cliqueKeyList)
 		newCliqueList = []
 		waitedMergeCliqueDic = {}
@@ -61,7 +63,6 @@ class cliqueExpander():
 			waitedMergeNodeList = []
 			for subIndex in range(index+1,l):
 				if self.isMergeClique(cliqueKeyList[index],cliqueKeyList[subIndex],cliqueDic,cliqueMvalueDic):
-					#print('True')
 					if cliqueKeyList[index] in waitedMergeCliqueDic:
 						waitedMergeCliqueDic[cliqueKeyList[index]].append(cliqueDic[cliqueKeyList[subIndex]])
 					else:
@@ -74,7 +75,6 @@ class cliqueExpander():
 		for ck in cliqueKeyList:
 			expandClique = cliqueDic[ck].copy()
 			self.mergeClique(expandClique,waitedMergeCliqueDic.get(ck,set()))
-			#print(expandClique)
 			newCliqueList.append(expandClique)
                 print ".......expand clique end......"
 		return newCliqueList
@@ -85,8 +85,6 @@ class cliqueExpander():
 		cliqueConnectNodeDic = {}
 		for c in cliqueDic:
 			cliqueConnectNodeDic[c] = self.getConnectNodeOfClique(cliqueDic[c])
-                #for c in cliqueConnectNodeDic:
-                #        print "connect num: %d"%(len(cliqueConnectNodeDic[c]))
 		newCliqueList = []
 		for ck in cliqueDic:
 			waitedMergeNodeList = []
@@ -137,9 +135,6 @@ class cliqueExpander():
 
 	def isMergeNode(self,key,node,cliqueDic,cliqueMvalueDic):
 		originMvalue = cliqueMvalueDic[key]
-		#finalClique = cliqueDic[cliqueSeedKey].copy()
-		#finalClique.add(node)
-		#finalMvalue = self.getMvalue(finalClique)
                 finalMvalue = self.getMvalueByAdd(key,cliqueDic,node)
 		return finalMvalue > originMvalue
 
@@ -188,6 +183,24 @@ class cliqueExpander():
 			temp.append(i)
                 c.update(set(temp))
 ######################################
+
+def test4delOverlapClique():
+        seedCliqueList = []
+        with open('../result/coworker_') as f:
+                for line in f:
+                        line.rstrip('\n')
+                        seedCliqueList.append(set(map(int,line.split(','))))
+        ce = cliqueExpander({},{},seedCliqueList)
+        newCliqueList = ce.expand()
+        beg = time.time()
+        #smax,smin = getMaxMinOverlap(seedCliqueList)
+        #nmax,nmin = getMaxMinOverlap(newCliqueList)
+        #print 'seedCliqueList overlap -- max : %.4f min : %.4f'%(smax,smin)
+        #print 'newCliqueList overlap -- max : %.4f min : %.4f'%(nmax,nmin)
+        getAvgOverlap(seedCliqueList)
+        getAvgOverlap(newCliqueList)
+        end = time.time()
+        print 'cal overlap cost : %0.4f'%(end-beg)
 
 
 if __name__ == '__main__':
