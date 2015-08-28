@@ -41,7 +41,8 @@ def test2():
         interestDic = getFollowDicByFile('../input/coworkerFellowRel.data')
         fanDic = getFanDicByFollowDic(interestDic)
         duplexConnectDic = getDuplexingDic(interestDic,fanDic)
-        jade(duplexConnectDic,duplexConnectDic,duplexConnectDic,6,'../result/coworker_total_duplex')
+        #jade(duplexConnectDic,duplexConnectDic,duplexConnectDic,6,'../result/coworker_total_duplex')
+        jadeHadInitMaximalCliques(duplexConnectDic,duplexConnectDic,duplexConnectDic,'../result/coworker_total_duplex')
 
 
 def test3():
@@ -93,11 +94,18 @@ def findMaximalCliques(duplexConnectDic,limitNodeInSeedNum,maximalCliqueList):
         bronkerboschSimplePivot(p,r,x,duplexConnectDic,limitNodeInSeedNum,maximalCliqueList)
         
 
+def writeCliqueListTofile(filePath,cliqueList):
+        f = open(filePath,'w')
+        for c in cliqueList:
+                f.write(str(len(c))+' : '+','.join(map(str,c))+'\n')
+        f.close()
+
+
 def jadeHadInitMaximalCliques(interestDic,fanDic,duplexConnectDic,outPath):
         beg = time.time()
         print(len(interestDic))
         seedCliqueList = []
-        with open('../result/coworker_total_simplex') as f:
+        with open('../result/coworker_total_duplex') as f:
                 for line in f:
                         line.rstrip('\n')
                         seedCliqueList.append(set(map(int,line.split(','))))
@@ -106,17 +114,21 @@ def jadeHadInitMaximalCliques(interestDic,fanDic,duplexConnectDic,outPath):
 	mutiExpandCliqueList = ce.expand()
         #**************
 
+        for i,value in enumerate(mutiExpandCliqueList):
+                competeOutPath = outPath + '_expand_' + str(i)
+                writeCliqueListTofile(competeOutPath,value)
         #边的模板表示
         #**************
-        cdp = cliqueDataProcesser(mutiExpandCliqueList)
-        et = edgeTemplate(cdp)
-        et.expressBatchEdge(interestDic)
+        #cdp = cliqueDataProcesser(mutiExpandCliqueList)
+        #et = edgeTemplate(cdp)
+        #et.expressBatchEdge(interestDic)
         #**************
-        showResult(outPath,newCliqueList)
+        #showResult(outPath,newCliqueList)
+        
         end = time.time()
         print "total cost time : %0.2f"%(end-beg)
 
 
 if __name__ == "__main__":
-        #test2()
-	test3()
+        test2()
+	#test3()
