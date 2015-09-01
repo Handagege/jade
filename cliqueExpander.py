@@ -37,7 +37,7 @@ class cliqueExpander():
 		return mutiExpandCliqueList
 
 
-        def delOverlapClique(self,cliqueList,overlapLimitValue = 0.5):
+        def delOverlapClique(self,cliqueList,overlapLimitValue = 0.3):
                 isMerged = True
                 newCliqueList = cliqueList
                 count = 0
@@ -45,7 +45,6 @@ class cliqueExpander():
                         count += 1
                         isMerged = False
                         equilongCliquesList = self.shuffle(newCliqueList)
-                        #print count,' - ',equilongCliquesList
                         newCliqueList = []
                         for c in equilongCliquesList:
                                 mergedCliqueList = []
@@ -53,8 +52,6 @@ class cliqueExpander():
                                         isMerged = True
                                 newCliqueList.extend(mergedCliqueList)
                         print count,' iter length : ',len(newCliqueList)
-                        #print count,' - ',newCliqueList
-                        #print ''
                 return newCliqueList
         
 
@@ -197,8 +194,9 @@ class cliqueExpander():
         def calOverlap(self,cliqueA,cliqueB):
                 overlapNum = len(cliqueA & cliqueB)
                 al = len(cliqueA)
-                bl = len(cliqueB)
-                minLen = (al if al < bl else bl)
+                #bl = len(cliqueB)
+                #minLen = (al if al < bl else bl)
+                minLen = al
                 defaultLen = 10
                 if minLen < defaultLen:
                         minLen = defaultLen
