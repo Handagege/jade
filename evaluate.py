@@ -92,7 +92,7 @@ class evaluater():
                 f = open('cliqueMeasure_'+str(uid),'w')
                 for c in sortedList:
                         #s = '%d -- m value : %.6f -- chosed node : %s'%(c,mvalueDic[c],','.join(map(str,chosedDic[c])))
-                        sm = '%d -- m value : %.6f --'%(c,mvalueDic[c])
+                        sm = '%d -- length : %d -- m value : %.6f --'%(c,len(cliqueOwnUidDic[c]),mvalueDic[c])
                         ss = ''
                         for i in range(0,length):
                                 ss += ' %s : %.4f'%(mostNumTagDic[c][i],tagShareRateDic[c][i])
@@ -199,8 +199,8 @@ class evaluater():
 
 if __name__ == '__main__':
         relFilePath = '../input/coworkerFellowRel.data'
-        resultFilePath = '../result/duplex_13/coworker_total_duplex_expand_0'
-        tagDataPath = '1036663592_0_tag_done'
+        resultFilePath = '../result/coworker_total_duplex_expand_1'
+        tagDataPath = '../input/1036663592_1_tag_done'
         dataType = 'duplex'
         di = dataIniter(relFilePath,resultFilePath,tagDataPath,dataType)
         e = evaluater(di)

@@ -20,7 +20,7 @@ class cliqueExpander():
                 mutiExpandCliqueList = []
                 beg = time.time()
                 print "seedCliqueList length : %d"%(len(self.seedCliqueList))
-		newCliqueList = self.delOverlapClique(self.seedCliqueList)
+		newCliqueList = self.delOverlapCliqueNoShuffle(self.seedCliqueList)
                 mutiExpandCliqueList.append(newCliqueList)
                 print "newCliqueList length : %d"%(len(newCliqueList))
                 end = time.time()
@@ -35,6 +35,48 @@ class cliqueExpander():
                 end = time.time()
                 print "expand node cost : %0.2f"%(end-beg)
 		return mutiExpandCliqueList
+
+
+        def delOverlapCliqueNoShuffle(self,cliqueList,overlapLimitValue = 0.3):
+                isMerged = True
+                newCliqueList = cliqueList
+                count = 0
+                maxLengthDif = 2
+                while isMerged:
+                        count += 1
+                        isMerged = False
+                        l = len(newCliqueList)
+                        print count,' iter length : ',len(newCliqueList)
+                        #for i in newCliqueList:
+                        #        print i
+                        tempCliqueList = []
+                        removeSet = set()
+                        for i in range(0,l):
+                                maxOverlap = 0.0
+                                maxIndex = 0
+                                if i in removeSet:
+                                        continue
+                                li = len(newCliqueList[i])
+                                for j in range(0,l):
+                                        if i == j or (j in removeSet):
+                                                continue
+                                        lj = len(newCliqueList[j])
+                                        if abs(li-lj) > maxLengthDif:
+                                                continue
+                                        tempOverlap = self.calOverlap(newCliqueList[i],newCliqueList[j])
+                                        if tempOverlap > maxOverlap:
+                                                maxOverlap,maxIndex = tempOverlap,j
+                                if maxOverlap >= overlapLimitValue:
+                                        isMerged = True
+                                        removeSet.add(maxIndex)
+                                        removeSet.add(i)
+                                        tempCliqueList.append(newCliqueList[i] | newCliqueList[maxIndex])
+                        for i in range(0,l):
+                                if i not in removeSet:
+                                        tempCliqueList.append(newCliqueList[i])
+                        newCliqueList = tempCliqueList
+                return newCliqueList
+
 
 
         def delOverlapClique(self,cliqueList,overlapLimitValue = 0.3):
@@ -54,7 +96,8 @@ class cliqueExpander():
                         print count,' iter length : ',len(newCliqueList)
                 return newCliqueList
         
-
+        
+        #将同样大小的团放在一起
         def shuffle(self,cliqueList):
                 equilongCliquesDic = {}
                 for c in cliqueList:
@@ -92,33 +135,6 @@ class cliqueExpander():
                 return isMerged
                 
 
-	#依据团与团关系拓展
-	def expandClique(self,cliqueDic,cliqueMvalueDic):
-		cliqueKeyList = list(cliqueDic.keys())
-		l = len(cliqueKeyList)
-		newCliqueList = []
-		waitedMergeCliqueDic = {}
-		for index in range(0,l-1):
-			waitedMergeNodeList = []
-			for subIndex in range(index+1,l):
-				if self.isMergeClique(cliqueKeyList[index],cliqueKeyList[subIndex],cliqueDic,cliqueMvalueDic):
-					if cliqueKeyList[index] in waitedMergeCliqueDic:
-						waitedMergeCliqueDic[cliqueKeyList[index]].append(cliqueDic[cliqueKeyList[subIndex]])
-					else:
-						waitedMergeCliqueDic[cliqueKeyList[index]] = [cliqueDic[cliqueKeyList[subIndex]]]
-					if cliqueKeyList[subIndex] in waitedMergeCliqueDic:
-						waitedMergeCliqueDic[cliqueKeyList[subIndex]].append(cliqueDic[cliqueKeyList[index]])
-					else:
-						waitedMergeCliqueDic[cliqueKeyList[subIndex]] = [cliqueDic[cliqueKeyList[index]]]
-		#print(waitedMergeCliqueDic)
-		for ck in cliqueKeyList:
-			expandClique = cliqueDic[ck].copy()
-			self.mergeClique(expandClique,waitedMergeCliqueDic.get(ck,set()))
-			newCliqueList.append(expandClique)
-                print ".......expand clique end......"
-		return newCliqueList
-	
-
 	#依据团与点关系进行拓展
 	def expandNode(self,cliqueDic,cliqueMvalueDic):
 		cliqueConnectNodeDic = {}
@@ -135,6 +151,7 @@ class cliqueExpander():
 			newCliqueList.append(expandClique)
 		return newCliqueList
 				
+
 	#取得与团有联系的结点
 	def getConnectNodeOfClique(self,clique):
 		connectNodeSet = set()
@@ -142,6 +159,7 @@ class cliqueExpander():
 			connectNodeSet = connectNodeSet | self.interestDic[c] | self.fanDic[c]
 		return connectNodeSet-clique
 		
+
 	#将团编号并生成dic(原始数据、M值)
 	def getCliqueDic(self,cliqueList):
 		count = 1
@@ -156,7 +174,7 @@ class cliqueExpander():
                         self.cliqueLCvalueDic[count] = lc
                         dc = graphTool.calDC(i,self.interestNumDic,self.fanNumDic,lc)
                         self.cliqueDCvalueDic[count] = dc
-			cliqueMvalueDic[count] = graphTool.calModularityOfOneClique(self.m,lc,dc)
+			cliqueMvalueDic[count] = graphTool.calModularityOfOneClique(self.m,lc,dc)/float(len(i))
 			count += 1
 		return cliqueDic,cliqueMvalueDic
 
@@ -166,9 +184,6 @@ class cliqueExpander():
 		originMvalue1 = cliqueMvalueDic[cliqueSeedKey]
 		originMvalue2 = cliqueMvalueDic[candidateCliqueKey]
 		finalMvalue = self.getMvalue(cliqueDic[cliqueSeedKey]|cliqueDic[candidateCliqueKey])
-		#print(cliqueSeedKey,' : ',cliqueDic[cliqueSeedKey],' - ',originMvalue1)
-		#print(candidateCliqueKey,' : ',cliqueDic[candidateCliqueKey],' - ',originMvalue2)
-		#print(finalMvalue)
 		return finalMvalue > originMvalue1 and finalMvalue > originMvalue2
 
 
@@ -176,6 +191,7 @@ class cliqueExpander():
 		originMvalue = cliqueMvalueDic[key]
                 finalMvalue = self.getMvalueByAdd(key,cliqueDic,node)
 		return finalMvalue > originMvalue
+
 
         def isOverlap(self,cliqueA,cliqueB,threshold):
                 overlapNum = len(cliqueA & cliqueB)
@@ -194,15 +210,13 @@ class cliqueExpander():
         def calOverlap(self,cliqueA,cliqueB):
                 overlapNum = len(cliqueA & cliqueB)
                 al = len(cliqueA)
-                #bl = len(cliqueB)
-                #minLen = (al if al < bl else bl)
-                minLen = al
+                bl = len(cliqueB)
+                minLen = (al if al < bl else bl)
                 defaultLen = 10
                 if minLen < defaultLen:
                         minLen = defaultLen
                 return float(overlapNum)/float(minLen)
                 
-
 
 	#计算模块度M
 	def getMvalue(self,clique):
@@ -216,7 +230,7 @@ class cliqueExpander():
                 addLC = len(self.interestDic[node] & clique) + len(self.fanDic[node] & clique)
                 addDC = len(self.interestDic[node]) + len(self.fanDic[node]) - addLC
                 M = graphTool.calModularityOfOneClique(float(self.m),oldLC+addLC,oldDC+addDC)
-                return M
+                return M/float(len(clique)+1)
 
 
 	#团合并
@@ -255,14 +269,15 @@ def test4delOverlapClique():
 
 
 def funcTest():
-        s1 = set([1,2,3])
+        s1 = set([1,2,3,4,5,6,7])
         s2 = set([3,4,5,6,7,8,9,10,23,45])
         s3 = set([4,7,11,13,15,17,56,55,67,77,88])
         s4 = set([3,4,5,6,7,8,9,10,23,55])
         s5 = set([45,56,78,98,34,43,67,89,99,32])
-        seedCliqueList = [s1,s2,s3,s4,s5]
+        s6 = set([6,7,8,9,10,23])
+        seedCliqueList = [s1,s2,s3,s4,s5,s6]
         ce = cliqueExpander({},{},seedCliqueList)
-        ce.delOverlapClique(seedCliqueList,0.2)
+        ce.delOverlapCliqueNoShuffle(seedCliqueList,0.5)
 
 
 def writeCliqueListTofile(filePath,cliqueList):
@@ -272,20 +287,21 @@ def writeCliqueListTofile(filePath,cliqueList):
         f.close()
 
 
-if __name__ == '__main__':
+def test1():
         seedCliqueList = []
         with open('../result/coworker_total_duplex') as f:
                 count = 0
                 for line in f:
                         count += 1
                         line.rstrip('\n')
-                        if count%10000 == 0:
-                                print line.split(',')
                         seedCliqueList.append(set(map(int,line.split(','))))
         print len(seedCliqueList)
         ce = cliqueExpander({},{},seedCliqueList)
-        newCliqueList = ce.delOverlapClique(seedCliqueList,0.6)
+        newCliqueList = ce.delOverlapCliqueNoShuffle(seedCliqueList,0.3)
         writeCliqueListTofile('../result/delOverlapClique',newCliqueList)
         
 
 
+if __name__ == '__main__':
+        #funcTest()
+        test1()

@@ -58,7 +58,7 @@ def getMvalue(clique,m,interestNumDic,fanNumDic,interestDic):
 	dc = calDC(clique,interestNumDic,fanNumDic,lc)
 	#print(m,lc,dc)
 	modularityOfOneClique = calModularityOfOneClique(float(m),lc,dc)
-	return modularityOfOneClique
+	return modularityOfOneClique/float(len(clique))
 
 
 def calCliqueOverlap(cliqueA,cliqueB,minLen):

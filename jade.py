@@ -106,7 +106,7 @@ def jadeHadInitMaximalCliques(interestDic,fanDic,duplexConnectDic,outPath):
         beg = time.time()
         print(len(interestDic))
         seedCliqueList = []
-        with open('../result/coworker_total_simplex_9') as f:
+        with open('../result/duplex_13/coworker_total_duplex_13') as f:
                 for line in f:
                         line.rstrip('\n')
                         seedCliqueList.append(set(map(int,line.split(','))))
@@ -131,5 +131,5 @@ def jadeHadInitMaximalCliques(interestDic,fanDic,duplexConnectDic,outPath):
 
 
 if __name__ == "__main__":
-        #test2()
-	test3()
+        test2()
+	#test3()
