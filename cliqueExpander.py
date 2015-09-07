@@ -20,7 +20,8 @@ class cliqueExpander():
                 mutiExpandCliqueList = []
                 beg = time.time()
                 print "seedCliqueList length : %d"%(len(self.seedCliqueList))
-		newCliqueList = self.delOverlapCliqueNoShuffle(self.seedCliqueList)
+		newCliqueList = self.delOverlapCliqueNoShuffle(self.seedCliqueList,0.2)
+                self.seedCliqueList = []
                 mutiExpandCliqueList.append(newCliqueList)
                 print "newCliqueList length : %d"%(len(newCliqueList))
                 end = time.time()

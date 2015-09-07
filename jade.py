@@ -38,11 +38,13 @@ def test1():
 
 def test2():
         #纯双向关系数据
-        interestDic = getFollowDicByFile('../input/coworkerFellowRel.data')
+        interestDic = getFollowDicByFile('../input/top1w_whiteUidFellowRel.data')
         fanDic = getFanDicByFollowDic(interestDic)
         duplexConnectDic = getDuplexingDic(interestDic,fanDic)
-        #jade(duplexConnectDic,duplexConnectDic,duplexConnectDic,6,'../result/coworker_total_duplex')
-        jadeHadInitMaximalCliques(duplexConnectDic,duplexConnectDic,duplexConnectDic,'../result/coworker_total_duplex')
+        interestDic.clear()
+        fanDic.clear()
+        #jade(duplexConnectDic,duplexConnectDic,duplexConnectDic,12,'../result/top1w_whiteUid_12_duplex')
+        jadeHadInitMaximalCliques(duplexConnectDic,duplexConnectDic,duplexConnectDic,'../result/coworker_02_duplex')
 
 
 def test3():
@@ -73,15 +75,18 @@ def jade(interestDic,fanDic,duplexConnectDic,limitNodeInSeedNum,outPath):
 
         #团拓展
         #**************
-	ce = cliqueExpander(interestDic,fanDic,maximalCliqueList)
-	mutiExpandCliqueList = ce.expand()
+	#ce = cliqueExpander(interestDic,fanDic,maximalCliqueList)
+	#mutiExpandCliqueList = ce.expand()
         #**************
-        mutiExpandCliqueList.insert(0,maximalCliqueList)
+        #mutiExpandCliqueList.insert(0,maximalCliqueList)
+        #for i,value in enumerate(mutiExpandCliqueList):
+        #        competeOutPath = outPath + '_expand_' + str(i)
+        #        writeCliqueListTofile(competeOutPath,value)
         #边的模板表示
         #**************
-        cdp = cliqueDataProcesser(mutiExpandCliqueList)
-        et = edgeTemplate(cdp)
-        et.expressBatchEdge(interestDic)
+        #cdp = cliqueDataProcesser(mutiExpandCliqueList)
+        #et = edgeTemplate(cdp)
+        #et.expressBatchEdge(interestDic)
         #**************
         #showResult(outPath,newCliqueList)
         end = time.time()
