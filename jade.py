@@ -38,13 +38,13 @@ def test1():
 
 def test2():
         #纯双向关系数据
-        interestDic = getFollowDicByFile('../input/top1w_whiteUidFellowRel.data')
+        interestDic = getFollowDicByFile('../input/coworkerFellowRel.data')
         fanDic = getFanDicByFollowDic(interestDic)
         duplexConnectDic = getDuplexingDic(interestDic,fanDic)
         interestDic.clear()
         fanDic.clear()
         #jade(duplexConnectDic,duplexConnectDic,duplexConnectDic,12,'../result/top1w_whiteUid_12_duplex')
-        jadeHadInitMaximalCliques(duplexConnectDic,duplexConnectDic,duplexConnectDic,'../result/coworker_02_duplex')
+        jadeHadInitMaximalCliques(duplexConnectDic,duplexConnectDic,duplexConnectDic,'../result/coworker_02_04_duplex')
 
 
 def test3():
@@ -111,7 +111,7 @@ def jadeHadInitMaximalCliques(interestDic,fanDic,duplexConnectDic,outPath):
         beg = time.time()
         print(len(interestDic))
         seedCliqueList = []
-        with open('../result/duplex_13/coworker_total_duplex_13') as f:
+        with open('../result/duplex_13/coworker_duplex_expand_0') as f:
                 for line in f:
                         line.rstrip('\n')
                         seedCliqueList.append(set(map(int,line.split(','))))

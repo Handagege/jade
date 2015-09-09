@@ -6,6 +6,25 @@ import json
 
 def getFollowDicByFile(filePath):
         followDic = {}
+        with open(filePath) as f:
+                for line in f:
+                        splitList = line.split('\t')
+                        uidKey = int(splitList[0])
+                        followUidsStr = splitList[1]
+                        try:
+                                if followUidsStr == '\n':
+                                        followUids = set()
+                                else:
+                                        followUids = set(map(int,followUidsStr.split(',')))
+                        except ValueError:
+                                print followUidsStr.split(',')
+                                exit()
+                        followDic[uidKey] = followUids
+        return followDic
+
+
+def getFollowDicByNoFilterFile(filePath):
+        followDic = {}
         count = 0
         with open(filePath) as f:
                 for line in f:
@@ -27,6 +46,7 @@ def getFollowDicByFile(filePath):
         for i in followDic:
                 followDic[i] = followDic[i] & uidSet
         return followDic
+
 
 def getFanDicByFollowDic(followDic):
         fanDic = {}

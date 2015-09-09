@@ -29,20 +29,22 @@ class cliqueExpander():
                 beg = end
 		cliqueDic,cliqueMvalueDic = self.getCliqueDic(newCliqueList)
                 end = time.time()
-                print "calulate M clique's value cost : %0.2f"%(end-beg)
-                beg = end
 		newCliqueList = self.expandNode(cliqueDic,cliqueMvalueDic)
                 mutiExpandCliqueList.append(newCliqueList)
                 end = time.time()
                 print "expand node cost : %0.2f"%(end-beg)
+                beg = end
+		newCliqueList = self.delOverlapCliqueNoShuffle(newCliqueList,0.4,4)
+                mutiExpandCliqueList.append(newCliqueList)
+                end = time.time()
+                print "2nd delete overlap cliques cost : %0.2f"%(end-beg)
 		return mutiExpandCliqueList
 
 
-        def delOverlapCliqueNoShuffle(self,cliqueList,overlapLimitValue = 0.4):
+        def delOverlapCliqueNoShuffle(self,cliqueList,overlapLimitValue,maxLengthDif = 2):
                 isMerged = True
                 newCliqueList = cliqueList
                 count = 0
-                maxLengthDif = 2
                 while isMerged:
                         count += 1
                         isMerged = False
