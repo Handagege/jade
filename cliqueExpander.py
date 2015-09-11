@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+import random
 import graphTool
 import time
 
@@ -20,7 +21,7 @@ class cliqueExpander():
                 mutiExpandCliqueList = []
                 beg = time.time()
                 print "seedCliqueList length : %d"%(len(self.seedCliqueList))
-		newCliqueList = self.delOverlapCliqueNoShuffle(self.seedCliqueList,0.2)
+		newCliqueList = self.fastDelOverlapClique(self.seedCliqueList,0.2,10)
                 self.seedCliqueList = []
                 mutiExpandCliqueList.append(newCliqueList)
                 print "newCliqueList length : %d"%(len(newCliqueList))
@@ -34,14 +35,63 @@ class cliqueExpander():
                 end = time.time()
                 print "expand node cost : %0.2f"%(end-beg)
                 beg = end
-		newCliqueList = self.delOverlapCliqueNoShuffle(newCliqueList,0.4,4)
+		newCliqueList = self.fastDelOverlapClique(newCliqueList,0.2,10)
                 mutiExpandCliqueList.append(newCliqueList)
                 end = time.time()
                 print "2nd delete overlap cliques cost : %0.2f"%(end-beg)
 		return mutiExpandCliqueList
 
 
-        def delOverlapCliqueNoShuffle(self,cliqueList,overlapLimitValue,maxLengthDif = 2):
+        def delOverlapCliqueBySample(self,cliqueList,overlapLimitValue,maxLengthDif = 100):
+                sampleNodes = self.sampleCliqueNodes(cliqueList)
+
+
+        def sampleCliqueNodes(self,cliqueList,sampleRatio = 0.1):
+                totalNodes = set()
+                for c in cliqueList:
+                        totalNodes.update(c)
+                sampleNodes = set(random.sample(totalNodes,int(len(totalNodes)*sampleRatio)))
+                return sampleNodes
+
+
+        def fastDelOverlapClique(self,cliqueList,overlapLimitValue,maxLengthDif = 4):
+                isMerged = True
+                newCliqueList = cliqueList
+                count = 0
+                while isMerged:
+                        count += 1
+                        isMerged = False
+                        l = len(newCliqueList)
+                        print count,' iter length : ',len(newCliqueList)
+                        tempCliqueList = []
+                        removeSet = set()
+                        for i in range(0,l-1):
+                                isMerge_i = False
+                                if i in removeSet:
+                                        continue
+                                li = len(newCliqueList[i])
+                                for j in range(i+1,l):
+                                        if j in removeSet:
+                                                continue
+                                        lj = len(newCliqueList[j])
+                                        if abs(li-lj) > maxLengthDif:
+                                                continue
+                                        tempOverlap = self.calOverlap(newCliqueList[i],newCliqueList[j])
+                                        if tempOverlap > overlapLimitValue:
+                                                isMerged = True
+                                                isMerge_i = True
+                                                removeSet.add(j)
+                                                tempCliqueList.append(newCliqueList[i] | newCliqueList[j])
+                                                break
+                                if not isMerge_i:
+                                        tempCliqueList.append(newCliqueList[i])
+                        if l-1 not in removeSet:
+                                tempCliqueList.append(newCliqueList[l-1])
+                        newCliqueList = tempCliqueList
+                return newCliqueList
+                
+
+        def delOverlapClique(self,cliqueList,overlapLimitValue,maxLengthDif = 4):
                 isMerged = True
                 newCliqueList = cliqueList
                 count = 0
@@ -77,27 +127,8 @@ class cliqueExpander():
                                 tempCliqueList.append(newCliqueList[l-1])
                         newCliqueList = tempCliqueList
                 return newCliqueList
-
-
-
-        def delOverlapClique(self,cliqueList,overlapLimitValue = 0.4):
-                isMerged = True
-                newCliqueList = cliqueList
-                count = 0
-                while isMerged:
-                        count += 1
-                        isMerged = False
-                        equilongCliquesList = self.shuffle(newCliqueList)
-                        newCliqueList = []
-                        for c in equilongCliquesList:
-                                mergedCliqueList = []
-                                if self.getMergedCliqueByOverlap(mergedCliqueList,c,overlapLimitValue):
-                                        isMerged = True
-                                newCliqueList.extend(mergedCliqueList)
-                        print count,' iter length : ',len(newCliqueList)
-                return newCliqueList
         
-        
+
         #将同样大小的团放在一起
         def shuffle(self,cliqueList):
                 equilongCliquesDic = {}
@@ -109,32 +140,6 @@ class cliqueExpander():
                                 equilongCliquesDic[l] = [c]
                 return equilongCliquesDic.values()
 
-
-        def getMergedCliqueByOverlap(self,mergedCliqueList,originCliqueList,overlapLimitValue):
-                removeList = []
-                l = len(originCliqueList)
-                isMerged = False
-                for i in range(0,l-1):
-                        maxOverlap = 0.0
-                        maxIndex = 0
-                        if i not in removeList:
-                                for j in range(i+1,l):
-                                        if originCliqueList[i] == originCliqueList[j]:
-                                                removeList.append(j)
-                                        else:
-                                                tempOverlap = self.calOverlap(originCliqueList[i],originCliqueList[j])
-                                                if tempOverlap > maxOverlap:
-                                                        maxOverlap,maxIndex = tempOverlap,j
-                                if maxOverlap >= overlapLimitValue:
-                                        isMerged = True
-                                        removeList.append(maxIndex)
-                                        mergedCliqueList.append(originCliqueList[i] | originCliqueList[maxIndex])
-                                else:
-                                        mergedCliqueList.append(originCliqueList[i])
-                if l-1 not in removeList:
-                        mergedCliqueList.append(originCliqueList[l-1])
-                return isMerged
-                
 
 	#依据团与点关系进行拓展
 	def expandNode(self,cliqueDic,cliqueMvalueDic):
@@ -152,6 +157,14 @@ class cliqueExpander():
 			newCliqueList.append(expandClique)
 		return newCliqueList
 				
+
+	#取得与团有联系的结点
+	def getConnectNodeOfClique(self,clique):
+		connectNodeSet = set()
+		for c in clique:
+			connectNodeSet = connectNodeSet | self.interestDic[c] | self.fanDic[c]
+		return connectNodeSet-clique
+		
 
 	#取得与团有联系的结点
 	def getConnectNodeOfClique(self,clique):
@@ -278,7 +291,8 @@ def funcTest():
         s6 = set([6,7,8,9,10,23])
         seedCliqueList = [s1,s2,s3,s4,s5,s6]
         ce = cliqueExpander({},{},seedCliqueList)
-        ce.delOverlapCliqueNoShuffle(seedCliqueList,0.5)
+        #ce.delOverlapClique(seedCliqueList,0.5)
+        print ce.sampleCliqueNodes(seedCliqueList,0.3)
 
 
 def writeCliqueListTofile(filePath,cliqueList):
@@ -290,7 +304,7 @@ def writeCliqueListTofile(filePath,cliqueList):
 
 def test1():
         seedCliqueList = []
-        with open('../result/coworker_total_duplex_18') as f:
+        with open('../result/coworker_duplex_18_expand_0') as f:
                 count = 0
                 for line in f:
                         count += 1
@@ -299,14 +313,13 @@ def test1():
         print len(seedCliqueList)
         ce = cliqueExpander({},{},seedCliqueList)
         beg = time.time()
-        newCliqueList = ce.delOverlapCliqueNoShuffle(seedCliqueList,0.3)
+        newCliqueList = ce.fastDelOverlapClique(seedCliqueList,0.3)
         end = time.time()
-        print "delete overlap cliques noshuffle cost : %0.2f"%(end-beg)
+        print "fast delete overlap cliques cost : %0.2f"%(end-beg)
         beg = end
         newCliqueList = ce.delOverlapClique(seedCliqueList,0.3)
         end = time.time()
         print "delete overlap cliques cost : %0.2f"%(end-beg)
-        #writeCliqueListTofile('../result/delOverlapClique',newCliqueList)
         
 
 
