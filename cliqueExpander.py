@@ -34,7 +34,7 @@ class cliqueExpander():
                 end = time.time()
                 print "expand node cost : %0.2f"%(end-beg)
                 beg = end
-		newCliqueList = self.delOverlapCliqueNoShuffle(newCliqueList,0.4,4)
+		newCliqueList = self.delOverlapCliqueNoShuffle(newCliqueList,0.21,10)
                 mutiExpandCliqueList.append(newCliqueList)
                 end = time.time()
                 print "2nd delete overlap cliques cost : %0.2f"%(end-beg)
