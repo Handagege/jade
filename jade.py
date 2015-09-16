@@ -44,7 +44,7 @@ def test2():
         interestDic.clear()
         fanDic.clear()
         #jade(duplexConnectDic,duplexConnectDic,duplexConnectDic,12,'../result/top1w_whiteUid_12_duplex')
-        jadeHadInitMaximalCliques(duplexConnectDic,duplexConnectDic,duplexConnectDic,'../result/coworker_02_04_duplex')
+        jadeHadInitMaximalCliques(duplexConnectDic,duplexConnectDic,duplexConnectDic,'../result/coworker_fast02_02_duplex')
 
 
 def test3():

@@ -35,15 +35,11 @@ class cliqueExpander():
                 end = time.time()
                 print "expand node cost : %0.2f"%(end-beg)
                 beg = end
-		newCliqueList = self.fastDelOverlapClique(newCliqueList,0.2,10)
+		newCliqueList = self.delOverlapClique(newCliqueList,0.2,100)
                 mutiExpandCliqueList.append(newCliqueList)
                 end = time.time()
                 print "2nd delete overlap cliques cost : %0.2f"%(end-beg)
 		return mutiExpandCliqueList
-
-
-        def delOverlapCliqueBySample(self,cliqueList,overlapLimitValue,maxLengthDif = 100):
-                sampleNodes = self.sampleCliqueNodes(cliqueList)
 
 
         def sampleCliqueNodes(self,cliqueList,sampleRatio = 0.1):
@@ -58,6 +54,7 @@ class cliqueExpander():
                 isMerged = True
                 newCliqueList = cliqueList
                 count = 0
+                tempOverlapLimitValue = 0.8
                 while isMerged:
                         count += 1
                         isMerged = False
@@ -77,7 +74,7 @@ class cliqueExpander():
                                         if abs(li-lj) > maxLengthDif:
                                                 continue
                                         tempOverlap = self.calOverlap(newCliqueList[i],newCliqueList[j])
-                                        if tempOverlap > overlapLimitValue:
+                                        if tempOverlap > tempOverlapLimitValue:
                                                 isMerged = True
                                                 isMerge_i = True
                                                 removeSet.add(j)
@@ -88,6 +85,8 @@ class cliqueExpander():
                         if l-1 not in removeSet:
                                 tempCliqueList.append(newCliqueList[l-1])
                         newCliqueList = tempCliqueList
+                        if tempOverlapLimitValue > overlapLimitValue:
+                                tempOverlapLimitValue -= 0.1
                 return newCliqueList
                 
 
